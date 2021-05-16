@@ -25,6 +25,7 @@ public class Main {
                 root.accept(eval, table);
 
                 table.printTableInfo();
+                table.printTable();
 
                 TypeCheckVisitor eval2 = new TypeCheckVisitor();
                 root.accept(eval2, table);

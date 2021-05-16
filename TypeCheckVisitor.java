@@ -5,6 +5,50 @@ import java.util.Map;
 import java.util.ArrayList;
 
 public class TypeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
+    /**
+    * f0 -> "class"
+    * f1 -> Identifier()
+    * f2 -> "{"
+    * f3 -> "public"
+    * f4 -> "static"
+    * f5 -> "void"
+    * f6 -> "main"
+    * f7 -> "("
+    * f8 -> "String"
+    * f9 -> "["
+    * f10 -> "]"
+    * f11 -> Identifier()
+    * f12 -> ")"
+    * f13 -> "{"
+    * f14 -> ( VarDeclaration() )*
+    * f15 -> ( Statement() )*
+    * f16 -> "}"
+    * f17 -> "}"
+    */
+    @Override
+    public String visit(MainClass n, SymbolTable argu) throws Exception {
+        String classname = n.f1.accept(this, argu);
+
+        // Add main class to symbol table with null parent.
+        ClassSymbolTable newClass = argu.table.get(classname);
+        argu.enter(newClass);
+        
+        MethodSymbolTable newMethod = newClass.methods.get("main");
+        newClass.enter(newMethod);
+
+        // Check method variables.
+        n.f14.accept(this, argu);
+
+        // Check method statements.
+        n.f15.accept(this, argu);
+
+        newClass.exit();
+
+        argu.exit();
+
+        return null;
+    }
+    
     @Override
     public String visit(ClassDeclaration n, SymbolTable argu) throws Exception {
         String classname = n.f1.accept(this, argu);
@@ -465,6 +509,7 @@ public class TypeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
 
         argu.enter(temp);
         String ident = n.f2.accept(this, argu);
+        //TODO: search in parents as well.
         String identType = temp.methods.get(ident).type;
 
         argu.params = new ArrayList<>();

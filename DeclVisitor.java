@@ -24,7 +24,7 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
     */
     @Override
     public String visit(MainClass n, SymbolTable argu) throws Exception {
-        String classname = n.f1.accept(this, null);
+        String classname = n.f1.accept(this, argu);
 
         // Add main class to symbol table with null parent.
         ClassSymbolTable newClass = new ClassSymbolTable(classname, null);
@@ -106,9 +106,6 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
 
         // Check parent class does not extend from other class.
         ClassSymbolTable parentC = argu.table.get(parentClass);
-        if(parentC.parent != null) {
-            throw new Exception("Single inheritance only.");
-        }
 
         // Else, add class to symbol table with null parent.
         ClassSymbolTable newClass = new ClassSymbolTable(classname, parentClass);
