@@ -1,3 +1,6 @@
+import syntaxtree.*;
+import visitor.*;
+
 public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
     /**
     * f0 -> "class"
@@ -24,11 +27,11 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
         String classname = n.f1.accept(this, null);
 
         // Add main class to symbol table with null parent.
-        classSymbolTable newClass = new classSymbolTable(classname, null);
+        ClassSymbolTable newClass = new ClassSymbolTable(classname, null);
         argu.table.put(classname, newClass);
         argu.enter(newClass);
         
-        methodSymbolTable newMethod = new methodSymbolTable("void");
+        MethodSymbolTable newMethod = new MethodSymbolTable("void");
         newClass.methods.put("main", newMethod);
         newClass.enter(newMethod);
 
@@ -64,7 +67,7 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
             throw new Exception("Duplicate class name.");
         }
         // Else, add class to symbol table with null parent.
-        classSymbolTable newClass = new classSymbolTable(classname, null);
+        ClassSymbolTable newClass = new ClassSymbolTable(classname, null);
         argu.table.put(classname, newClass);
         argu.enter(newClass);
 
@@ -102,13 +105,13 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
         }
 
         // Check parent class does not extend from other class.
-        classSymbolTable parentC = argu.table.get(parentClass);
+        ClassSymbolTable parentC = argu.table.get(parentClass);
         if(parentC.parent != null) {
             throw new Exception("Single inheritance only.");
         }
 
         // Else, add class to symbol table with null parent.
-        classSymbolTable newClass = new classSymbolTable(classname, parentClass);
+        ClassSymbolTable newClass = new ClassSymbolTable(classname, parentClass);
         argu.table.put(classname, newClass);
     
         argu.enter(newClass);
@@ -128,8 +131,8 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
     */
     @Override
     public String visit(VarDeclaration n, SymbolTable argu) throws Exception {
-        classSymbolTable currentClass = argu.getCurrent();
-        methodSymbolTable currentMethod = currentClass.getCurrent();
+        ClassSymbolTable currentClass = argu.getCurrent();
+        MethodSymbolTable currentMethod = currentClass.getCurrent();
 
         String type = n.f0.accept(this, argu);
         String variable = n.f1.accept(this, argu);
@@ -171,7 +174,7 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     @Override
     public String visit(MethodDeclaration n, SymbolTable argu) throws Exception {
-        classSymbolTable currentClass = argu.getCurrent();
+        ClassSymbolTable currentClass = argu.getCurrent();
 
         String myType = n.f1.accept(this, argu);
         String myName = n.f2.accept(this, argu);
@@ -181,7 +184,7 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
             throw new Exception("Duplicate method name.");
         }
 
-        methodSymbolTable newMethod = new methodSymbolTable(myType);
+        MethodSymbolTable newMethod = new MethodSymbolTable(myType);
         currentClass.methods.put(myName, newMethod);
         currentClass.enter(newMethod);
         n.f4.accept(this, argu);
@@ -204,8 +207,8 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
      */
     @Override
     public String visit(FormalParameter n, SymbolTable argu) throws Exception{
-        classSymbolTable currentClass = argu.getCurrent();
-        methodSymbolTable currentMethod = currentClass.getCurrent();
+        ClassSymbolTable currentClass = argu.getCurrent();
+        MethodSymbolTable currentMethod = currentClass.getCurrent();
 
         String type = n.f0.accept(this, argu);
         String name = n.f1.accept(this, argu);

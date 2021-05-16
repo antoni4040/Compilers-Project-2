@@ -1,18 +1,23 @@
-public class classSymbolTable {
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.LinkedHashMap;
+
+public class ClassSymbolTable {
     public Map<String, String> fields;
-    public Map<String, methodSymbolTable> methods;
+    public Map<String, MethodSymbolTable> methods;
     public String parent;
     public String name;
-    methodSymbolTable current = null;
+    MethodSymbolTable current = null;
 
-    public classSymbolTable(String name_, String parent_) {
+    public ClassSymbolTable(String name_, String parent_) {
         this.fields = new LinkedHashMap<String, String>();
-        this.methods = new LinkedHashMap<String, methodSymbolTable>();
+        this.methods = new LinkedHashMap<String, MethodSymbolTable>();
         this.name = name_;
         this.parent = parent_;
     }
 
-    public void enter(methodSymbolTable toEnter) {
+    public void enter(MethodSymbolTable toEnter) {
         this.current = toEnter;
     }
 
@@ -20,7 +25,7 @@ public class classSymbolTable {
         this.current = null;
     }
 
-    public methodSymbolTable getCurrent() {
+    public MethodSymbolTable getCurrent() {
         return this.current;
     }
 
@@ -30,7 +35,7 @@ public class classSymbolTable {
             System.out.println(entry.getKey() + " " + entry.getValue());
         }
         System.out.println("Methods");
-        for (Map.Entry<String, methodSymbolTable> entry : this.methods.entrySet()) {
+        for (Map.Entry<String, MethodSymbolTable> entry : this.methods.entrySet()) {
             System.out.println(entry.getKey());
             entry.getValue().printMethod();
         }
@@ -54,17 +59,17 @@ public class classSymbolTable {
 
     public int classMethodsOffset() {
         int position = 0;
-        for (Map.Entry<String, methodSymbolTable> entry : this.methods.entrySet()) {
+        for (Map.Entry<String, MethodSymbolTable> entry : this.methods.entrySet()) {
             position += 8;
         }
         return position;
     }
 
-    public void printClassInfo(Map<String, classSymbolTable> table) {
+    public void printClassInfo(Map<String, ClassSymbolTable> table) {
         int position = 0;
 
         if(this.parent != null) {
-            classSymbolTable parentClass = table.get(this.parent);
+            ClassSymbolTable parentClass = table.get(this.parent);
             position = parentClass.classFieldsOffset();
         }
 
@@ -84,12 +89,12 @@ public class classSymbolTable {
 
         position = 0;
         if(this.parent != null) {
-            classSymbolTable parentClass = table.get(this.parent);
+            ClassSymbolTable parentClass = table.get(this.parent);
             position = parentClass.classMethodsOffset();
         }
 
         System.out.println("---Methods---");
-        for (Map.Entry<String, methodSymbolTable> entry : this.methods.entrySet()) {
+        for (Map.Entry<String, MethodSymbolTable> entry : this.methods.entrySet()) {
             System.out.println(this.name + "." + entry.getKey() + ":" + position);
             position += 8;
         }

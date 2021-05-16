@@ -1,20 +1,14 @@
 import syntaxtree.*;
 import visitor.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.ArrayList;
 
-public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
+public class TypeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
     @Override
     public String visit(ClassDeclaration n, SymbolTable argu) throws Exception {
         String classname = n.f1.accept(this, argu);
-        classSymbolTable current = argu.table.get(classname);
+        ClassSymbolTable current = argu.table.get(classname);
         
         argu.enter(current);
 
@@ -29,7 +23,7 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
     @Override
     public String visit(ClassExtendsDeclaration n, SymbolTable argu) throws Exception {
         String classname = n.f1.accept(this, argu);
-        classSymbolTable current = argu.table.get(classname);
+        ClassSymbolTable current = argu.table.get(classname);
     
         argu.enter(current);
 
@@ -58,12 +52,12 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
     */
     @Override
     public String visit(MethodDeclaration n, SymbolTable argu) throws Exception {
-        classSymbolTable currentClass = argu.getCurrent();
+        ClassSymbolTable currentClass = argu.getCurrent();
 
         String myName = n.f2.accept(this, argu);
 
         System.out.println(myName);
-        methodSymbolTable current = currentClass.methods.get(myName);
+        MethodSymbolTable current = currentClass.methods.get(myName);
 
         currentClass.enter(current);
 
@@ -72,6 +66,27 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
 
         // Check method statements.
         n.f8.accept(this, argu);
+
+        String ret = n.f10.accept(this, argu);
+        if(!current.type.equals(ret)) {
+            
+            boolean matchFound = false;
+            if(argu.table.containsKey(ret)) {
+                ClassSymbolTable currentC = argu.table.get(ret);
+                while(currentC.parent != null) {
+                    if(currentC.parent == current.type) {
+                        matchFound = true;
+                        break;
+                    }
+                    currentC = argu.table.get(currentC.parent);
+                }
+            }
+
+            if(!matchFound) {
+                System.out.println(current.type + " != " + ret);
+                throw new Exception("Type mismatch in return type.");
+            }
+        }
 
         currentClass.exit();
 
@@ -97,8 +112,8 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
     public String visit(Identifier n, SymbolTable argu) throws Exception {
         String name = n.f0.toString();
 
-        classSymbolTable currentClass = argu.getCurrent();
-        methodSymbolTable currentMethod = null;
+        ClassSymbolTable currentClass = argu.getCurrent();
+        MethodSymbolTable currentMethod = null;
         if(currentClass != null) {
             currentMethod = currentClass.getCurrent();
         }
@@ -117,7 +132,7 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
             if(currentClass.methods.containsKey(name)) {
                 return name;
             }           
-            classSymbolTable temp = currentClass;
+            ClassSymbolTable temp = currentClass;
             while(temp.parent != null) {
                 temp = argu.table.get(temp.parent);
                 // Search for field in parent class.
@@ -154,7 +169,7 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
                 return name;
             }            
 
-            classSymbolTable temp = currentClass;
+            ClassSymbolTable temp = currentClass;
             while(temp.parent != null) {
                 temp = argu.table.get(temp.parent);
                 // Search for field in parent class.
@@ -196,7 +211,7 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
         String ret = n.f0.accept(this, argu);
 
         if(ret.equals("this")) {
-            classSymbolTable current = argu.getCurrent();
+            ClassSymbolTable current = argu.getCurrent();
             return current.name;
         }
 
@@ -255,8 +270,23 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
         String identifier = n.f0.accept(this, argu);
         String expr = n.f2.accept(this, argu);
         if(!identifier.equals(expr)) {
-            System.out.println(identifier + " != " + expr);
-            throw new Exception("Type mismatch in assignment.");
+            
+            boolean matchFound = false;
+            if(argu.table.containsKey(expr)) {
+                ClassSymbolTable current = argu.table.get(expr);
+                while(current.parent != null) {
+                    if(current.parent == identifier) {
+                        matchFound = true;
+                        break;
+                    }
+                    current = argu.table.get(current.parent);
+                }
+            }
+
+            if(!matchFound) {
+                System.out.println(identifier + " != " + expr);
+                throw new Exception("Type mismatch in assignment.");
+            }
         }
         return identifier;
     }
@@ -425,9 +455,9 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
     public String visit(MessageSend n, SymbolTable argu) throws Exception {
         String expr = n.f0.accept(this, argu);
 
-        classSymbolTable currentClass = argu.getCurrent();
+        ClassSymbolTable currentClass = argu.getCurrent();
 
-        classSymbolTable temp = null;
+        ClassSymbolTable temp = null;
         if(!argu.table.containsKey(expr)) {
             throw new Exception("Can't find class.");
         }
@@ -535,7 +565,23 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
         String expr = n.f0.accept(this, argu);
 
         if(!param.equals(expr)) {
-            throw new Exception("Wrong parameter type. " + param + "!=" + expr);
+            
+            boolean matchFound = false;
+            if(argu.table.containsKey(expr)) {
+                ClassSymbolTable current = argu.table.get(expr);
+                while(current.parent != null) {
+                    if(current.parent == param) {
+                        matchFound = true;
+                        break;
+                    }
+                    current = argu.table.get(current.parent);
+                }
+            }
+
+            if(!matchFound) {
+                System.out.println(param + " != " + expr);
+                throw new Exception("Type mismatch in parameter.");
+            }
         }
 
         argu.currentIndex = 1;
@@ -556,7 +602,23 @@ public class typeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
         String expr = n.f1.accept(this, argu);
 
         if(!param.equals(expr)) {
-            throw new Exception("Wrong parameter type. " + param + "!=" + expr);
+            
+            boolean matchFound = false;
+            if(argu.table.containsKey(expr)) {
+                ClassSymbolTable current = argu.table.get(expr);
+                while(current.parent != null) {
+                    if(current.parent == param) {
+                        matchFound = true;
+                        break;
+                    }
+                    current = argu.table.get(current.parent);
+                }
+            }
+
+            if(!matchFound) {
+                System.out.println(param + " != " + expr);
+                throw new Exception("Type mismatch in parameter.");
+            }
         }
 
         argu.currentIndex = argu.currentIndex + 1;
