@@ -147,6 +147,9 @@ public class DeclVisitor extends GJDepthFirst<String, SymbolTable> {
             if(currentMethod.vars.containsKey(variable)){
                 throw new Exception("Duplicate variable name.");
             }
+            if(currentMethod.params.containsKey(variable)){
+                throw new Exception("Duplicate variable name.");
+            }
             // Else, add variable to fields map of current class.
             currentMethod.vars.put(variable, type);
         }

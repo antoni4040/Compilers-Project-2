@@ -509,8 +509,21 @@ public class TypeCheckVisitor extends GJDepthFirst<String, SymbolTable>{
 
         argu.enter(temp);
         String ident = n.f2.accept(this, argu);
-        //TODO: search in parents as well.
-        String identType = temp.methods.get(ident).type;
+
+        String identType = null;
+        if(temp.methods.containsKey(ident)) {
+            identType = temp.methods.get(ident).type;
+        }
+        else {
+            while(temp.parent != null) {
+                temp = argu.table.get(temp.parent); 
+                argu.enter(temp);
+                if(temp.methods.containsKey(ident)) {
+                    identType = temp.methods.get(ident).type;
+                }
+            }
+        }
+        
 
         argu.params = new ArrayList<>();
         for(Map.Entry<String, String> entry : temp.methods.get(ident).params.entrySet()) {
